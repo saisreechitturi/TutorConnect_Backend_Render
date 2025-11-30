@@ -58,13 +58,18 @@ const allowedOrigins = [
 const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+        if (!origin) {
+            logger.debug('CORS: no origin header present, allowing request');
+            return callback(null, true);
         }
+
+        if (allowedOrigins.includes(origin)) {
+            logger.info(`CORS: allowing origin ${origin}`);
+            return callback(null, true);
+        }
+
+        logger.warn(`CORS: rejecting origin ${origin} - not in allowed list: ${allowedOrigins.join(', ')}`);
+        return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     optionsSuccessStatus: 200
