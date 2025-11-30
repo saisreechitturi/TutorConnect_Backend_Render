@@ -43,11 +43,16 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // CORS configuration
+// Support FRONTEND_URL as a single origin or a comma-separated list of origins.
+const envOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
 const allowedOrigins = [
     'http://localhost:3000',
     'https://sxc3319.uta.cloud',
     'https://saisreechitturi.github.io',
-    process.env.FRONTEND_URL
+    ...envOrigins
 ].filter(Boolean);
 
 const corsOptions = {
