@@ -43,13 +43,28 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // CORS configuration
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://sxc3319.uta.cloud',
+    'https://saisreechitturi.github.io',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL
-        : 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
 
 // Logging
@@ -110,7 +125,7 @@ async function startServer() {
 
         // Log configuration details
         logger.info('Server configuration:');
-        logger.info(`   • Frontend URL: ${process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL || 'Not set' : 'http://localhost:3000'}`);
+    logger.info(`   • Allowed frontend origins: ${allowedOrigins.length ? allowedOrigins.join(', ') : 'None configured'}`);
         logger.info(`   • Rate limit: ${process.env.NODE_ENV === 'production' ? '100' : '1000'} requests per 15 minutes`);
         logger.info(`   • Body size limit: 10MB`);
         logger.info(`   • CORS enabled: Yes`);
@@ -139,7 +154,8 @@ async function startServer() {
 
             const io = new Server(server, {
                 cors: {
-                    origin: corsOptions.origin,
+                    // Socket.io accepts an array of allowed origins
+                    origin: allowedOrigins,
                     credentials: true
                 }
             });
